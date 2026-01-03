@@ -30,10 +30,7 @@ local function xor_decrypt(data, key)
     local out = {}
     for i = 1, #data do
         out[i] = string.char(
-            bit32.bxor(
-                data:byte(i),
-                key:byte((i - 1) % #key + 1)
-            )
+            string.byte(data, i) ~ string.byte(key, (i - 1) % #key + 1)
         )
     end
     return table.concat(out)
