@@ -19,12 +19,15 @@ local res = http_request({
 })
 
 local raw = crypt.base64decode(res.Body)
+
 local prefix_len = raw:byte(1) * 256 + raw:byte(2)
 local len_pos = 3 + prefix_len
+
 local len = 0
 for i = len_pos, len_pos + 3 do
     len = len * 256 + raw:byte(i)
 end
+
 local payload_start = len_pos + 4
 local payload = raw:sub(payload_start, payload_start + len - 1)
 
