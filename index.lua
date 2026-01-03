@@ -59,7 +59,7 @@ end
 -- Main loader
 local function load_script()
     local res = http_request({
-        Url = "https://lunoria-one.vercel.app/loader",
+        Url = "https://lunoria-one.vercel.app/loader",  -- fixed space
         Method = "GET"
     })
 
@@ -68,7 +68,7 @@ local function load_script()
         return
     end
 
-    print("[HTTP] Loader response size:", #res.Body)
+    print("[RAW] First 200 chars of body:", res.Body:sub(1, 200))
 
     local raw = base64_decode(res.Body)
     print("[B64] Decoded size:", #raw)
