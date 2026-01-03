@@ -43,16 +43,26 @@ dbg("Response received, length = " .. tostring(#res.Body))
 
 -- Base64 decode (debugged)
 local payload
-local ok, decoded = pcall(function()
-    return HttpService:Base64Decode(res.Body)
-end)
 
-if not ok or not decoded then
-    dbg("HttpService:Base64Decode failed")
-    return
+-- Case 1: body is already binary (http.request)
+if type(res.Body) == "string" and res.Body:sub(1,5) == "local" then
+    dbg("Body already Lua source (no base64)")
+    payload = res.Body
+
+else
+    dbg("Attempting Base64 decode")
+    local ok, decoded = pcall(function()
+        return HttpService:Base64Decode(res.Body)
+    end)
+
+    if not ok or not decoded then
+        dbg("Base64 decode failed")
+        return
+    end
+
+    payload = decoded
 end
 
-payload = decoded
 
 if not payload then
     dbg("payload is nil after decode")
