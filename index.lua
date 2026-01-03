@@ -80,33 +80,7 @@ local encrypted_payload = raw:sub(payload_start, payload_start + payload_len - 1
 
 print("[PAYLOAD] Encrypted payload size:", #encrypted_payload)
 
--- ===============================
--- STAGE 1 XOR
--- ===============================
-local stage1 = xor_decrypt(encrypted_payload, TEMP_KEY)
-print("[XOR] Stage 1 decrypt OK")
-
--- ===============================
--- EXTRACT REAL KEY
--- ===============================
-local key_b64 = stage1:match('local XOR_KEY="([^"]+)"')
-if not key_b64 then
-    warn("[FAIL] XOR_KEY not found in stage1")
-    print(stage1:sub(1, 300)) -- show beginning
-    return
-end
-
-print("[KEY] Found XOR_KEY (base64)")
-
-local real_key = crypt.base64decode(key_b64)
-print("[KEY] Real key length:", #real_key)
-
--- ===============================
--- STAGE 2 XOR
--- ===============================
-local final_loader = xor_decrypt(stage1, real_key)
-print("[XOR] Stage 2 decrypt OK")
-
+local final_loader = xor_decrypt(encrypted_payload, TEMP_KEY)
 -- ===============================
 -- EXECUTE
 -- ===============================
