@@ -14,7 +14,7 @@ local function http_request(opts)
 end
 
 local res = http_request({
-    Url = "https://yowhat-one.vercel.app/loader",
+    Url = "https://lunoria-one.vercel.app/loader",
     Method = "GET"
 })
 
