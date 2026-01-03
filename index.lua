@@ -43,19 +43,16 @@ dbg("Response received, length = " .. tostring(#res.Body))
 
 -- Base64 decode (debugged)
 local payload
-if base64decode then
-    dbg("Using base64decode")
-    payload = base64decode(res.Body)
-elseif crypt and crypt.base64decode then
-    dbg("Using crypt.base64decode")
-    payload = crypt.base64decode(res.Body)
-elseif Encoding and Encoding.base64decode then
-    dbg("Using Encoding.base64decode")
-    payload = Encoding.base64decode(res.Body)
-else
-    dbg("NO BASE64 DECODER FOUND")
+local ok, decoded = pcall(function()
+    return HttpService:Base64Decode(res.Body)
+end)
+
+if not ok or not decoded then
+    dbg("HttpService:Base64Decode failed")
     return
 end
+
+payload = decoded
 
 if not payload then
     dbg("payload is nil after decode")
