@@ -14,6 +14,6 @@
                   :JB&&####&&BJ:                  
                      ^5#&&#5^                     
                         ^^                        
-
+              Powered by LuaSec V12.5
 ]]
 loadstring(game:HttpGet("https://luasec.xyz/scripts/4a28e7a79eb88e101af55288e8516e54.lua"))()
